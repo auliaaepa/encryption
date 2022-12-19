@@ -1,29 +1,29 @@
 import argparse
 
-# Ukuran block dalam bits
+# Ukuran block dalam bit
 BLOCK_SIZE = 64
 
 # Tabel permutasi untuk round key (PC-1: 64 -> 56 bits)
-PERMUTATED_CHOICE_1 = [57, 49, 41, 33, 25, 17,  9,
-                        1, 58, 50, 42, 34, 26, 18,
-                       10,  2, 59, 51, 43, 35, 27,
-                       19, 11,  3, 60, 52, 44, 36,
-                       63, 55, 47, 39, 31, 23, 15,
-                        7, 62, 54, 46, 38, 30, 22,
-                       14,  6, 61, 53, 45, 37, 29,
-                       21, 13,  5, 28, 20, 12,  4]
+PERMUTED_CHOICE_1 = [57, 49, 41, 33, 25, 17,  9,
+                      1, 58, 50, 42, 34, 26, 18,
+                     10,  2, 59, 51, 43, 35, 27,
+                     19, 11,  3, 60, 52, 44, 36,
+                     63, 55, 47, 39, 31, 23, 15,
+                      7, 62, 54, 46, 38, 30, 22,
+                     14,  6, 61, 53, 45, 37, 29,
+                     21, 13,  5, 28, 20, 12,  4]
 # Tabel shifting untuk round key (left circular shift)
 SHIFT_TABLE = [1, 1, 2, 2, 2, 2, 2, 2,
                1, 2, 2, 2, 2, 2, 2, 1]
 # Tabel permutasi untuk round key (PC-2: 56 -> 48 bits)
-PERMUTATED_CHOICE_2 = [14, 17, 11, 24,  1,  5,
-                        3, 28, 15,  6, 21, 10,
-                       23, 19, 12,  4, 26,  8,
-                       16,  7, 27, 20, 13,  2,
-                       41, 52, 31, 37, 47, 55,
-                       30, 40, 51, 45, 33, 48,
-                       44, 49, 39, 56, 34, 53,
-                       46, 42, 50, 36, 29, 32]
+PERMUTED_CHOICE_2 = [14, 17, 11, 24,  1,  5,
+                      3, 28, 15,  6, 21, 10,
+                     23, 19, 12,  4, 26,  8,
+                     16,  7, 27, 20, 13,  2,
+                     41, 52, 31, 37, 47, 55,
+                     30, 40, 51, 45, 33, 48,
+                     44, 49, 39, 56, 34, 53,
+                     46, 42, 50, 36, 29, 32]
 
 # Tabel permutasi untuk input text (Intial Permutation)
 IP = [58, 50, 42, 34, 26, 18, 10, 2,
@@ -35,12 +35,14 @@ IP = [58, 50, 42, 34, 26, 18, 10, 2,
       61, 53, 45, 37, 29, 21, 13, 5,
       63, 55, 47, 39, 31, 23, 15, 7]
 # Tabel ekspansi untuk separuh input text (Expansion: 32 -> 48 bits)
-EXPANSION_TABLE = [32,  1,  2,  3,  4,  5,  4,  5,
-                    6,  7,  8,  9,  8,  9, 10, 11,
-                   12, 13, 12, 13, 14, 15, 16, 17,
-                   16, 17, 18, 19, 20, 21, 20, 21,
-                   22, 23, 24, 25, 24, 25, 26, 27,
-                   28, 29, 28, 29, 30, 31, 32, 1]
+EXPANSION_TABLE = [32,  1,  2,  3,  4,  5,
+                    4,  5,  6,  7,  8,  9,
+                    8,  9, 10, 11, 12, 13, 
+                   12, 13, 14, 15, 16, 17,
+                   16, 17, 18, 19, 20, 21,
+                   20, 21, 22, 23, 24, 25,
+                   24, 25, 26, 27, 28, 29,
+                   28, 29, 30, 31, 32,  1]
 # Tabel sbox untuk separuh input text (S-Box: 48 -> 32 bits)
 SBOX = [[[14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7],
          [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8],
@@ -90,7 +92,7 @@ PERMUTATION_TABLE = [16,  7, 20, 21,
                      32, 27,  3,  9,
                      19, 13, 30,  6,
                      22, 11,  4, 25]
-# Tabel permutasi untuk unput text (Inverse Initial Permutation)
+# Tabel permutasi untuk input text (Inverse Initial Permutation)
 INVERSE_IP = [40, 8, 48, 16, 56, 24, 64, 32,
               39, 7, 47, 15, 55, 23, 63, 31,
               38, 6, 46, 14, 54, 22, 62, 30,
@@ -129,7 +131,7 @@ def left_circular_shift(block, n_shifts):
     return block[n_shifts:] + block[:n_shifts]
 
 def permute(block, permutation_table):
-    """permutasi/mapping block sesuai tabel permutasi"""
+    """permutasi/mapping block sesuai tabel permutasi (index)"""
     return ''.join(block[i-1] for i in permutation_table)
 
 def split(block):
@@ -139,17 +141,18 @@ def split(block):
 
 def generate_round_keys(key):
     """men-generate 16 round keys"""
-    # permutasi key dengan tabel PC-1 untuk meng-drop bit parity (8th bits) (64 -> 56 bits)
-    key = permute(key, PERMUTATED_CHOICE_1)
+    # permutasi key dengan tabel PC-1 untuk permutasi dan meng-drop parity bits (8th bits) (64 -> 56 bits)
+    key = permute(key, PERMUTED_CHOICE_1)
 
-    round_keys = []    
+    round_keys = []
     lroundkey, rroundkey = split(key) # split hasil permutasi pc-1 key menjadi bagian kiri dan kanan
     for i in range(16):
         # left circular shift untuk setiap bagian kiri dan kanan round key
-        lroundkey, rroundkey = left_circular_shift(lroundkey, SHIFT_TABLE[i]), left_circular_shift(rroundkey, SHIFT_TABLE[i])
+        lroundkey = left_circular_shift(lroundkey, SHIFT_TABLE[i])
+        rroundkey = left_circular_shift(rroundkey, SHIFT_TABLE[i])
         # permutasi round key dengan tabel PC-2 (56 -> 48 bits)
         round_key = lroundkey + rroundkey
-        round_key = permute(round_key, PERMUTATED_CHOICE_2)
+        round_key = permute(round_key, PERMUTED_CHOICE_2)
         # simpan round key ke dalam list
         round_keys.append(round_key)
 
@@ -168,7 +171,7 @@ def permute_sbox(block):
     return permuted_block
 
 def round_function(block, round_key):
-    """menghitung hasil round function untuk separuh bagian input"""
+    """memproses round function untuk separuh bagian input"""
     # permutasi block dengan exspansion table (32 -> 48 bits)
     block = permute(block, EXPANSION_TABLE)
     # xor hasil ekspansi dengan round key yang sesuai
@@ -180,7 +183,7 @@ def round_function(block, round_key):
     return block
 
 def des(block, round_keys):
-    """menghitung data encryption standart"""
+    """memproses data encryption standart"""
     # permutasi block dengan initial permutation
     block = permute(block, IP)
     print("INITIAL PERMUTATION:", block)
@@ -188,7 +191,7 @@ def des(block, round_keys):
     # perhitungan round
     lblock, rblock = split(block)
     for i in range(16):
-        # left: right; right: left xor hasil round function
+        # left=right dan right=left xor hasil round function
         lblock, rblock = rblock, xor(lblock, round_function(rblock, round_keys[i]))   
         print(f"ROUND {i+1:>2}:", lblock, rblock)
     
@@ -201,7 +204,7 @@ def des(block, round_keys):
     print(f"INVERSE INITIAL PERMUTATION:", block)
     return block
 
-def cipher_block_chaining(option, input_file, output_file, iv_file, key_file):
+def cbc(option, input_file, output_file, iv_file, key_file):
     input = input_file.read()
     if input_file: input_file.close()
     input = ascii_to_hex(input)
@@ -231,7 +234,7 @@ def cipher_block_chaining(option, input_file, output_file, iv_file, key_file):
     output = ""
     latest_cipher = iv
     for i, j in enumerate(range(0, len(input), BLOCK_SIZE)):
-        print(f"\nBLOCK {i}")
+        print(f"\nBLOCK {i+1}")
         block = input[j:j+BLOCK_SIZE]
         print("BLOCK:", block)
         if option == "encryption":
@@ -254,16 +257,19 @@ def cipher_block_chaining(option, input_file, output_file, iv_file, key_file):
     if output_file: output_file.close()
         
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    # define argument parser (untuk mendapatkan option dan file-file yang diperlukan)
+    parser = argparse.ArgumentParser(prog = 'des-cbc.py', description = 'Program to perform encryption and decryption using DES-CBC',)
     parser.add_argument('-o', '--option', dest='option', choices=['encryption', 'decryption'], help="an option between encryption and decryption", required=True)
-    parser.add_argument('--input', dest='input_file', type=argparse.FileType('rb'), help="input file to be used for encryption/decryption", required=True)
-    parser.add_argument('--output', dest='output_file', type=argparse.FileType('wb'), help="output file to be used for encryption/decryption", required=True)
-    parser.add_argument('--iv', dest='iv_file', type=argparse.FileType('r'), help="initial value (iv) file to be used for encryption/decryption", required=True)
-    parser.add_argument('--key', dest='key_file', type=argparse.FileType('r'), help="key file to be used for encryption/decryption", required=True)
+    parser.add_argument('--input', dest='input_file', type=argparse.FileType('rb'), help="(ascii) input file to be used for encryption/decryption", required=True)
+    parser.add_argument('--output', dest='output_file', type=argparse.FileType('wb'), help="(ascii) output file to be used for encryption/decryption", required=True)
+    parser.add_argument('--iv', dest='iv_file', type=argparse.FileType('r'), help="(hexadecimal) initial value (iv) file to be used for encryption/decryption", required=True)
+    parser.add_argument('--key', dest='key_file', type=argparse.FileType('r'), help="(hexadecimal) key file to be used for encryption/decryption", required=True)
     
     try:
+        # mendapatkan arguments
         args = parser.parse_args()
-        cipher_block_chaining(args.option, args.input_file, args.output_file, args.iv_file, args.key_file)
+        # proses des-cbc dengan arguments yang diberikan
+        cbc(args.option, args.input_file, args.output_file, args.iv_file, args.key_file)
     except ValueError as ve:
         print("ValueError:", ve)
     except Exception as e:
